@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import styled from "styled-components"; // Import styled-components
+import React, { useEffect, useState, useMemo } from "react";
+import styled, { ThemeProvider } from "styled-components"; // Import styled-components and ThemeProvider
 // Assuming data.ts is in the parent directory (e.g., project_root/data.ts and project_root/src/App.tsx)
 // Adjust the path if your data.ts is located elsewhere, e.g., './data' if it's in the same src folder.
 import {
@@ -14,18 +14,32 @@ import {
 } from "./data";
 // import yaml from "js-yaml";
 
-// Theme definition
-const THEME = {
+// Theme definitions
+const lightTheme = {
   baseBackground: "#ffffff",
   baseText: "#000000",
-  spaceColor: "#ffffff", // Spaces should blend with background
-  punctuationColor: "#000000", // Punctuation color
+  spaceColor: "#ffffff",
+  punctuationColor: "#000000",
   tooltipBackground: "#ffffff",
   tooltipText: "#000000",
   tooltipBorder: "#cccccc",
-  semanticDefaultText: "#000000", // Default for semantic parts if color missing
-  columnBorder: "#dddddd", // Light border for columns if needed
+  semanticDefaultText: "#000000",
+  columnBorder: "#dddddd",
 };
+
+const darkTheme = {
+  baseBackground: "#000000",
+  baseText: "#ffffff",
+  spaceColor: "#000000",
+  punctuationColor: "#ffffff",
+  tooltipBackground: "#000000",
+  tooltipText: "#ffffff",
+  tooltipBorder: "#555555",
+  semanticDefaultText: "#bbbbbb",
+  columnBorder: "#444444",
+};
+
+export type AppTheme = typeof lightTheme; // Exporting Theme type for use in functions
 
 interface LetterSegment {
   text: string; // Should now be a single character
@@ -49,17 +63,19 @@ interface AnnotatedWord {
 // Add PrimalSegment interface
 interface PrimalSegment {
   text: string;
-  color?: string; // Color for this segment, defaults to THEME.baseText if undefined
+  color?: string; // Color for this segment, defaults to theme.baseText if undefined
 }
 
 // Styled Components Definitions
-const AppContainer = styled.div`
-  background-color: ${THEME.baseBackground};
-  color: ${THEME.baseText};
+const AppContainer = styled.div<{ fontFamily: string; fontWeight: string }>`
+  background-color: ${(props) => props.theme.baseBackground};
+  color: ${(props) => props.theme.baseText};
+  font-family: ${(props) => props.fontFamily};
+  font-weight: ${(props) => props.fontWeight};
   margin: 0;
   padding: 20px;
-  font-family: sans-serif;
   min-height: 100vh;
+  transition: background-color 0.3s ease, color 0.3s ease; // Smooth transition for theme change
 `;
 
 const TextColumnsContainer = styled.div`
@@ -77,30 +93,57 @@ const TextColumn = styled.div`
   font-size: 18px;
   line-height: 1.6;
   padding: 15px;
-  border: 1px solid ${THEME.columnBorder};
+  border: 1px solid ${(props) => props.theme.columnBorder};
   border-radius: 5px;
-  background-color: ${THEME.baseBackground}; // Changed from #1a1a1a
-  font-family: monospace; // Applied here for all columns
-  color: ${THEME.baseText}; // Ensure text color contrasts with white background
+  /* background-color is inherited */
+  /* font-family is inherited */
+  color: ${(props) =>
+    props.theme.baseText}; // Ensure text color contrasts with background
 `;
 
 const TextParagraph = styled.p`
   white-space: pre-wrap;
-  color: ${THEME.baseText}; // Ensure paragraph text uses base text color
+  color: ${(props) =>
+    props.theme.baseText}; // Ensure paragraph text uses base text color
 `;
 
 const TooltipContainer = styled.div`
   position: fixed;
-  background-color: ${THEME.tooltipBackground};
-  color: ${THEME.tooltipText};
-  border: 1px solid ${THEME.tooltipBorder};
+  background-color: ${(props) => props.theme.tooltipBackground};
+  color: ${(props) => props.theme.tooltipText};
+  border: 1px solid ${(props) => props.theme.tooltipBorder};
   border-radius: 4px;
   padding: 8px 12px;
   font-size: 14px;
   z-index: 1000;
   pointer-events: none; // Important so it doesn't interfere with mouse events on text
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); // Softer shadow for white background
-  max-width: 300px; // Prevent tooltip from becoming too wide
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  max-width: 300px;
+`;
+
+const TogglePanel = styled.div`
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  padding: 10px;
+  background-color: rgba(128, 128, 128, 0.5); // Semi-transparent background
+  border-radius: 5px;
+  z-index: 2000; // Above tooltips
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  button {
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    background-color: #f0f0f0;
+    color: #333;
+    cursor: pointer;
+    border-radius: 3px;
+    &:hover {
+      background-color: #e0e0e0;
+    }
+  }
 `;
 
 // Helper to build a lookup map from Toki Pona terms to their colors
@@ -192,56 +235,11 @@ const staticWordToTpDefinitionMap = new Map<string, string[]>([
   // Add more definitions as needed based on TEXT
 ]);
 
+/*
 interface ParsedDictionaryEntry {
   tp: string;
   definitions: string[];
 }
-
-/* 
-// Ensure the entire block of these functions is commented out
-// to resolve "Cannot find name 'yaml'" and unused var warnings.
-
-const parseDictionaryYml = (ymlContent: string): Map<string, ParsedDictionaryEntry> => {
-  const parsedMap = new Map<string, ParsedDictionaryEntry>();
-  // try {
-  //   const data = yaml.load(ymlContent) as Record<string, any>; // THIS LINE IS THE CULPRIT
-  //   for (const tpWord in data) {
-  //     if (Object.prototype.hasOwnProperty.call(data, tpWord)) {
-  //       const entry = data[tpWord];
-  //       const definitions: string[] = [];
-  //       // ... (rest of the parsing logic if any was present) ...
-  //       parsedMap.set(tpWord, { tp: tpWord, definitions });
-  //     }
-  //   }
-  // } catch (e) { 
-  //   console.error("Error parsing dictionary.yml:", e);
-  // }
-  return parsedMap; 
-};
-
-interface CompoundEntry {
-  tpPhrase: string;
-  translations: { text: string; frequency: number }[];
-}
-
-// Make sure this function is commented out
-const parseCompoundsTxt = (txtContent: string): CompoundEntry[] => {
-  const entries: CompoundEntry[] = [];
-  // ... (rest of the parsing logic) ...
-  return entries;
-};
-
-// Make sure this function is commented out
-const findBestTpDefinition = (
-  englishWord: string,
-  maxDefLength: number,
-  // These parameters would come from parsed files, not needed for static
-  // parsedCompounds: CompoundEntry[], 
-  // tpDataFromDictionaryTs: TpWordData[] 
-): string[] | null => {
-  // ... (rest of the definition finding logic) ...
-  return null; 
-};
 */
 
 // Function to generate tooltip text using PRIMAL_COLOR_TERMS
@@ -249,7 +247,8 @@ const generatePrimalTooltipText = (
   tpWord: string,
   primalColorTerms: Record<string, string>,
   dictionary: typeof DICTIONARY,
-  appColors: typeof COLORS // Added appColors for direct access
+  appColors: typeof COLORS, // Added appColors for direct access
+  theme: AppTheme
 ): PrimalSegment[] => {
   const wordEntry = dictionary.find((entry) => entry.tp === tpWord);
   const finalSegments: PrimalSegment[] = [];
@@ -294,13 +293,13 @@ const generatePrimalTooltipText = (
     } else if (part1.term) {
       finalSegments.push({
         text: `${part1.term}(?)`,
-        color: THEME.semanticDefaultText,
+        color: theme.semanticDefaultText,
       });
       firstPartRendered = true;
     } else if (part1.colorName) {
       finalSegments.push({
         text: `${part1.colorName}(?)`,
-        color: THEME.semanticDefaultText,
+        color: theme.semanticDefaultText,
       });
       firstPartRendered = true;
     }
@@ -311,7 +310,7 @@ const generatePrimalTooltipText = (
       if (firstPartRendered && (part2.term || part2.colorName)) {
         finalSegments.push({
           text: " + ",
-          color: THEME.semanticDefaultText,
+          color: theme.semanticDefaultText,
         });
       }
 
@@ -320,12 +319,12 @@ const generatePrimalTooltipText = (
       } else if (part2.term) {
         finalSegments.push({
           text: `${part2.term}(?)`,
-          color: THEME.semanticDefaultText,
+          color: theme.semanticDefaultText,
         });
       } else if (part2.colorName) {
         finalSegments.push({
           text: `${part2.colorName}(?)`,
-          color: THEME.semanticDefaultText,
+          color: theme.semanticDefaultText,
         });
       }
     } else if (parts.length === 1 && !wordEntry.color2 && wordEntry.color1) {
@@ -339,8 +338,8 @@ const generatePrimalTooltipText = (
 const transformText = (
   text: string,
   tpColorMap: Map<string, { color1: string; color2: string }>,
-  staticDefMap: Map<string, string[]>
-  // colorPalette: typeof COLORS // No longer directly pass COLORS here, use THEME or specific needs
+  staticDefMap: Map<string, string[]>,
+  theme: AppTheme
 ): AnnotatedWord[] => {
   const words = text.split(/(\s+)/);
   // const punctuationRegex = /^[.,/#!$%^&*;:{}=\-_`~()?]+$/; // Not directly used in final logic
@@ -353,7 +352,7 @@ const transformText = (
       for (let i = 0; i < originalWord.length; i++) {
         spaceSegments.push({
           text: originalWord[i],
-          color: THEME.spaceColor, // Spaces use theme's space color
+          color: theme.spaceColor, // Spaces use theme's space color
           isTokiPonaColored: false,
         });
       }
@@ -405,13 +404,13 @@ const transformText = (
               // TP word from definition not in tpColorMap (e.g. 'ala')
               segments.push({
                 text: engChar1,
-                color: THEME.semanticDefaultText,
+                color: theme.semanticDefaultText,
                 isTokiPonaColored: true,
               });
               if (engChar2) {
                 segments.push({
                   text: engChar2,
-                  color: THEME.semanticDefaultText,
+                  color: theme.semanticDefaultText,
                   isTokiPonaColored: true,
                 });
               }
@@ -421,13 +420,13 @@ const transformText = (
             // Ran out of TP definition words for the English word characters
             segments.push({
               text: engChar1,
-              color: THEME.baseText,
+              color: theme.baseText,
               isTokiPonaColored: false,
             });
             if (engChar2) {
               segments.push({
                 text: engChar2,
-                color: THEME.baseText,
+                color: theme.baseText,
                 isTokiPonaColored: false,
               });
             }
@@ -447,7 +446,7 @@ const transformText = (
           }
           segments.push({
             text: char, // Punctuation
-            color: THEME.punctuationColor,
+            color: theme.punctuationColor,
             isTokiPonaColored: false,
           });
         }
@@ -463,10 +462,10 @@ const transformText = (
         segments.push({
           text: char,
           color: wordCharRegex.test(char)
-            ? THEME.baseText
+            ? theme.baseText
             : char.trim().length === 0
-            ? THEME.spaceColor
-            : THEME.punctuationColor, // Treat non-word chars as punctuation
+            ? theme.spaceColor
+            : theme.punctuationColor, // Treat non-word chars as punctuation
           isTokiPonaColored: false,
         });
       }
@@ -492,11 +491,12 @@ function getUkrainianWordColorSegments( // This function is generic for any lang
   wordPartToColor: string,
   tpDefinitionForWord: string[] | undefined,
   currentDictionary: typeof DICTIONARY,
-  currentColors: typeof COLORS // Keep COLORS here as it's about specific TP color mapping
+  currentColors: typeof COLORS, // Keep COLORS here as it's about specific TP color mapping
+  theme: AppTheme
 ): Segment[] {
   const segments: Segment[] = [];
-  const defaultSegmentColor = THEME.baseText; // Default for uncolored parts of words
-  const spaceSegmentColor = THEME.spaceColor;
+  const defaultSegmentColor = theme.baseText; // Default for uncolored parts of words
+  const spaceSegmentColor = theme.spaceColor;
 
   if (wordPartToColor.trim().length === 0) {
     // Handle if an empty or space string is passed
@@ -532,15 +532,15 @@ function getUkrainianWordColorSegments( // This function is generic for any lang
       if (dictEntry && dictEntry.color1 && dictEntry.color2) {
         colorForChar1 =
           currentColors[dictEntry.color1 as keyof typeof currentColors] ||
-          THEME.semanticDefaultText; // Use semantic default if color name valid but hex missing
+          theme.semanticDefaultText; // Use semantic default if color name valid but hex missing
         colorForChar2 =
           currentColors[dictEntry.color2 as keyof typeof currentColors] ||
-          THEME.semanticDefaultText;
+          theme.semanticDefaultText;
       } else if (dictEntry && dictEntry.color1) {
         // Fallback if only color1 defined
         colorForChar1 =
           currentColors[dictEntry.color1 as keyof typeof currentColors] ||
-          THEME.semanticDefaultText;
+          theme.semanticDefaultText;
         colorForChar2 = colorForChar1; // Use color1 for both if color2 missing
       } else {
         // Fallback if TP word not in DICTIONARY or no colors defined
@@ -564,8 +564,8 @@ function getUkrainianWordColorSegments( // This function is generic for any lang
               fallbackDictEntry.color2 as keyof typeof currentColors
             ];
         } else {
-          colorForChar1 = THEME.semanticDefaultText;
-          colorForChar2 = THEME.semanticDefaultText;
+          colorForChar1 = theme.semanticDefaultText;
+          colorForChar2 = theme.semanticDefaultText;
         }
       }
     }
@@ -603,7 +603,8 @@ const transformNonEnglishText = (
   wordMap: Record<string, string[]>, // Generic: UKRAINIAN_WORD_TP_MAP or SPANISH_WORD_TP_MAP
   dictionary: typeof DICTIONARY,
   colors: typeof COLORS, // Keep COLORS for TP color mapping
-  cleaningFunction: (word: string) => string // Pass the specific cleaning function
+  cleaningFunction: (word: string) => string, // Pass the specific cleaning function
+  theme: AppTheme
 ): AnnotatedWord[] => {
   const words = text.split(/(\s+)/); // Split by space, keeping spaces
 
@@ -617,7 +618,7 @@ const transformNonEnglishText = (
       for (let i = 0; i < originalWordWithPunctuation.length; i++) {
         spaceSegments.push({
           text: originalWordWithPunctuation[i],
-          color: THEME.spaceColor,
+          color: theme.spaceColor,
           isTokiPonaColored: false,
         });
       }
@@ -648,7 +649,8 @@ const transformNonEnglishText = (
       wordPart,
       tpDefinition,
       dictionary,
-      colors
+      colors,
+      theme
     );
 
     const letterSegments: LetterSegment[] = visualSegments.map((vs) => ({
@@ -662,7 +664,7 @@ const transformNonEnglishText = (
       for (const puncChar of punctuation) {
         letterSegments.push({
           text: puncChar,
-          color: THEME.punctuationColor,
+          color: theme.punctuationColor,
           isTokiPonaColored: false,
         });
       }
@@ -685,6 +687,14 @@ function cleanSpanishWordForKey(originalWord: string): string {
 }
 
 const App: React.FC = () => {
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(true); // Default to dark mode (#000 background)
+  const [currentFontWeight, setCurrentFontWeight] = useState<"normal" | "bold">(
+    "normal"
+  );
+  const [currentFontFamily, setCurrentFontFamily] = useState<
+    "sans-serif" | "serif" | "monospace"
+  >("sans-serif");
+
   const [englishAnnotatedText, setEnglishAnnotatedText] = useState<
     AnnotatedWord[]
   >([]);
@@ -708,35 +718,45 @@ const App: React.FC = () => {
     []
   );
 
+  const selectedTheme = useMemo(
+    () => (isDarkMode ? darkTheme : lightTheme),
+    [isDarkMode]
+  );
+
   useEffect(() => {
     setEnglishAnnotatedText(
-      transformText(TEXT, tpColorMap, staticWordToTpDefinitionMap) // Removed COLORS from here
+      transformText(
+        TEXT,
+        tpColorMap,
+        staticWordToTpDefinitionMap,
+        selectedTheme
+      )
     );
     setUkrainianAnnotatedText(
       transformNonEnglishText(
-        // Using generic transformer
         UKRAINIAN_TEXT,
         UKRAINIAN_WORD_TP_MAP,
         DICTIONARY,
-        COLORS, // Pass COLORS for TP color mapping
-        cleanUkrainianWordForKey
+        COLORS,
+        cleanUkrainianWordForKey,
+        selectedTheme
       )
     );
     setSpanishAnnotatedText(
       transformNonEnglishText(
-        // Using generic transformer
         SPANISH_TEXT,
         SPANISH_WORD_TP_MAP,
         DICTIONARY,
-        COLORS, // Pass COLORS for TP color mapping
-        cleanSpanishWordForKey // Pass Spanish cleaning function
+        COLORS,
+        cleanSpanishWordForKey,
+        selectedTheme
       )
     );
-  }, [tpColorMap]);
+  }, [tpColorMap, selectedTheme]); // Depend on selectedTheme (which depends on isDarkMode)
 
   const handleWordMouseEnter = (
     event: React.MouseEvent<HTMLSpanElement>,
-    word: AnnotatedWord // This now works for both English and Ukrainian
+    word: AnnotatedWord
   ) => {
     if (word.tpDefinition && word.tpDefinition.length > 0) {
       const content = (
@@ -753,7 +773,7 @@ const App: React.FC = () => {
                   style={{
                     color: colorData
                       ? colorData.color1
-                      : THEME.semanticDefaultText,
+                      : selectedTheme.semanticDefaultText,
                   }}
                 >
                   {tpWord[0]}
@@ -766,7 +786,7 @@ const App: React.FC = () => {
                     style={{
                       color: colorData
                         ? colorData.color2
-                        : THEME.semanticDefaultText,
+                        : selectedTheme.semanticDefaultText,
                     }}
                   >
                     {tpWord[1]}
@@ -777,7 +797,7 @@ const App: React.FC = () => {
                 tpWordSpans.push(
                   <span
                     key={`${index}-charRest`}
-                    style={{ color: THEME.semanticDefaultText }}
+                    style={{ color: selectedTheme.semanticDefaultText }}
                   >
                     {tpWord.substring(2)}
                   </span>
@@ -791,7 +811,8 @@ const App: React.FC = () => {
               tpWord,
               PRIMAL_COLOR_TERMS,
               DICTIONARY,
-              COLORS
+              COLORS,
+              selectedTheme
             );
 
             return (
@@ -799,7 +820,7 @@ const App: React.FC = () => {
                 {tpWordSpans}
                 {wordEntry?.en && colorData && (
                   <>
-                    <span style={{ color: THEME.baseText }}> (</span>
+                    <span style={{ color: selectedTheme.baseText }}> (</span>
                     {wordEntry.en.length > 0 && (
                       <span style={{ color: colorData.color1 }}>
                         {wordEntry.en[0]}
@@ -811,21 +832,22 @@ const App: React.FC = () => {
                       </span>
                     )}
                     {wordEntry.en.length > 2 && (
-                      <span style={{ color: THEME.baseText }}>
+                      <span style={{ color: selectedTheme.baseText }}>
                         {wordEntry.en.substring(2)}
                       </span>
                     )}
-                    <span style={{ color: THEME.baseText }}>)</span>
+                    <span style={{ color: selectedTheme.baseText }}>)</span>
                   </>
                 )}
                 {primalSegments.length > 0 && (
                   <>
-                    <span style={{ color: THEME.baseText }}>: </span>
+                    <span style={{ color: selectedTheme.baseText }}>: </span>
                     {primalSegments.map((segment, segIdx) => (
                       <span
                         key={`${index}-primal-${segIdx}`}
                         style={{
-                          color: segment.color || THEME.semanticDefaultText,
+                          color:
+                            segment.color || selectedTheme.semanticDefaultText,
                         }}
                       >
                         {segment.text}
@@ -926,38 +948,65 @@ const App: React.FC = () => {
     });
   };
 
+  const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
+  const toggleFontWeight = () =>
+    setCurrentFontWeight(currentFontWeight === "normal" ? "bold" : "normal");
+  const cycleFontFamily = () => {
+    const families: Array<"sans-serif" | "serif" | "monospace"> = [
+      "sans-serif",
+      "serif",
+      "monospace",
+    ];
+    const currentIndex = families.indexOf(currentFontFamily);
+    setCurrentFontFamily(families[(currentIndex + 1) % families.length]);
+  };
+
   return (
-    <AppContainer>
-      <TextColumnsContainer>
-        <TextColumn>
-          {/* <ColumnTitle>English Text</ColumnTitle> */}
-          <TextParagraph>
-            {renderAnnotatedText(englishAnnotatedText)}
-          </TextParagraph>
-        </TextColumn>
-        <TextColumn>
-          {/* <ColumnTitle>Ukrainian Text (Toki Pona Colors)</ColumnTitle> */}
-          <TextParagraph>
-            {renderAnnotatedText(ukrainianAnnotatedText)}
-          </TextParagraph>
-        </TextColumn>
-        <TextColumn>
-          {" "}
-          {/* Added Spanish Column */}
-          {/* <ColumnTitle>Spanish Text (Toki Pona Colors)</ColumnTitle> */}
-          <TextParagraph>
-            {renderAnnotatedText(spanishAnnotatedText)}
-          </TextParagraph>
-        </TextColumn>
-      </TextColumnsContainer>
-      {tooltipVisible && tooltipContent && (
-        <TooltipContainer
-          style={{ left: tooltipPosition.x, top: tooltipPosition.y }}
-        >
-          {tooltipContent}
-        </TooltipContainer>
-      )}
-    </AppContainer>
+    <ThemeProvider theme={selectedTheme}>
+      <AppContainer
+        fontFamily={currentFontFamily}
+        fontWeight={currentFontWeight}
+      >
+        <TogglePanel>
+          <button onClick={toggleDarkMode}>
+            {isDarkMode ? "Light Mode" : "Dark Mode"}
+          </button>
+          <button onClick={toggleFontWeight}>
+            Weight: {currentFontWeight}
+          </button>
+          <button onClick={cycleFontFamily}>Font: {currentFontFamily}</button>
+        </TogglePanel>
+        <TextColumnsContainer>
+          <TextColumn>
+            {/* <ColumnTitle>English Text</ColumnTitle> */}
+            <TextParagraph>
+              {renderAnnotatedText(englishAnnotatedText)}
+            </TextParagraph>
+          </TextColumn>
+          <TextColumn>
+            {/* <ColumnTitle>Ukrainian Text (Toki Pona Colors)</ColumnTitle> */}
+            <TextParagraph>
+              {renderAnnotatedText(ukrainianAnnotatedText)}
+            </TextParagraph>
+          </TextColumn>
+          <TextColumn>
+            {" "}
+            {/* Added Spanish Column */}
+            {/* <ColumnTitle>Spanish Text (Toki Pona Colors)</ColumnTitle> */}
+            <TextParagraph>
+              {renderAnnotatedText(spanishAnnotatedText)}
+            </TextParagraph>
+          </TextColumn>
+        </TextColumnsContainer>
+        {tooltipVisible && tooltipContent && (
+          <TooltipContainer
+            style={{ left: tooltipPosition.x, top: tooltipPosition.y }}
+          >
+            {tooltipContent}
+          </TooltipContainer>
+        )}
+      </AppContainer>
+    </ThemeProvider>
   );
 };
 

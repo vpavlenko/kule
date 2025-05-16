@@ -1,5 +1,7 @@
 # Styling Rules for Kule Project
 
 ## Backgrounds
-- Never use any backgrounds except #ffffff (white). This is crucial for the color-intensive text application.
+- Default background is #000000 (black).
+- A toggle allows switching the background to #ffffff (white).
+- Background is only defined at the main application container level (e.g., body or top-level div); nested components must not redefine their background color and should inherit or be transparent.
   Apply to: All UI components. 
