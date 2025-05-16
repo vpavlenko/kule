@@ -28,11 +28,11 @@ This project displays a given text, with words colored based on their correspond
 
 4.  **Applying Colors to English Word Letters**:
     - Once the best TP definition (e.g., `[tp_word1, tp_word2, tp_word3]`) is determined:
-      - The **first two letters** of the original English word are colored using `color1` and `color2` of `tp_word1` (from `data.ts`). These colors create a linear gradient.
-      - The **next two letters** (3rd and 4th) of the English word are colored using `color1` and `color2` of `tp_word2`.
-      - This pattern continues, pairing two English letters with the colors of the corresponding TP word in the definition sequence.
-    - If the TP definition is shorter than the number of 2-letter segments in the English word (i.e., `definition_length < ceil(N / 2)`), any remaining 2-letter segments of the English word are colored white.
-    - If an English word has an odd number of letters, the last single letter also forms a segment and is colored according to the corresponding TP word in the definition, or white if the definition is exhausted.
+      - The **first letter** of the (usually two-letter) segment of the original English word is colored using `color1` of `tp_word1` (from `data.ts`).
+      - The **second letter** of that English word segment is colored using `color2` of `tp_word1`.
+      - This pattern continues: the next two letters of the English word (forming the second segment) are colored by `tp_word2`'s `color1` (for the third English letter) and `color2` (for the fourth English letter), and so on.
+    - If the TP definition is shorter than the number of 2-letter segments in the English word (i.e., `definition_length < ceil(N / 2)`), any remaining letters of the English word are colored white.
+    - If an English word has an odd number of letters, the last single letter forms a segment. It is colored with `color1` of the corresponding TP word, or white if the definition is exhausted.
     - If no suitable TP definition is found for an English word, the entire word is displayed in white.
     - Spaces between words are preserved and colored black.
 
@@ -52,58 +52,45 @@ Let's say the English word is "**experiment**" (10 letters).
     - `kama`: { color1: "yellow", color2: "red" }
     - `sona`: { color1: "gray", color2: "yellow" }
 5.  Applying colors to "experiment":
-    - **`ex`** (letters 1-2) uses `pali`'s colors: `yellow` to `yellow` gradient.
-    - **`pe`** (letters 3-4) uses `kama`'s colors: `yellow` to `red` gradient.
-    - **`ri`** (letters 5-6) uses `sona`'s colors: `gray` to `yellow` gradient.
-    - **`me`** (letters 7-8): The TP definition (`pali`, `kama`, `sona`) is now exhausted. This segment is colored white.
-    - **`nt`** (letters 9-10): Also colored white.
+    - **`e`** (letter 1) uses `pali`'s `color1`: `yellow`.
+    - **`x`** (letter 2) uses `pali`'s `color2`: `yellow`.
+    - **`p`** (letter 3) uses `kama`'s `color1`: `yellow`.
+    - **`e`** (letter 4) uses `kama`'s `color2`: `red`.
+    - **`r`** (letter 5) uses `sona`'s `color1`: `gray`.
+    - **`i`** (letter 6) uses `sona`'s `color2`: `yellow`.
+    - **`m`** (letter 7): The TP definition (`pali`, `kama`, `sona`) is now exhausted. This letter is colored white.
+    - **`e`** (letter 8): Also colored white.
+    - **`n`** (letter 9): Also colored white.
+    - **`t`** (letter 10): Also colored white.
 
 ### Static Coloring in Markdown (Approximation)
 
-GitHub Markdown doesn't directly support linear gradients on text or specific background clips for text. We can approximate by coloring the text itself if we had a single color per segment, or by using `<code>` blocks with background colors if we wanted to simulate segments, but this is very limited.
-
-Given the limitation, we can show the intended words and their associated TP color words:
+GitHub Markdown doesn't directly support complex text coloring like applying different colors to individual letters within a word easily using standard Markdown syntax. We can show the intended words and their associated TP color words, and then an approximation of the visual output.
 
 `experiment` ->
-`ex` (pali: yellow/yellow) `pe` (kama: yellow/red) `ri` (sona: gray/yellow) `me` (white) `nt` (white)
+`e` (pali: yellow) `x` (pali: yellow)
+`p` (kama: yellow) `e` (kama: red)
+`r` (sona: gray) `i` (sona: yellow)
+`m` (white) `e` (white) `n` (white) `t` (white)
 
-If we were to use simple font colors (this won't show gradients):
+If we were to use simple font colors (this is an approximation of the per-letter coloring):
 
-<span style="color:yellow;">ex</span><span style="color:orange;">pe</span><span style="color:silver;">ri</span>ment
-(Note: Used orange as a mix of yellow/red, silver for gray/yellow for this simplified Markdown example - actual is gradient.)
+<span style="color:yellow;">e</span><span style="color:yellow;">x</span><span style="color:yellow;">p</span><span style="color:red;">e</span><span style="color:gray;">r</span><span style="color:yellow;">i</span>ment
+(Note: This simplified Markdown example just applies some of the distinct colors.)
 
 Or, with a black background (simulated via a table cell for Markdown, if the viewer supports HTML):
 
 <table>
 <tr>
 <td style="background-color:black; color:white;">
-<span style="color:#ffff00;">ex</span><span style="color:#ff8000;">pe</span><span style="color:#b7b700;">ri</span>ment
-(Colors are hex approximations of the first color or a mix)
+<span style="color:#ffff00;">e</span><span style="color:#ffff00;">x</span><span style="color:#ffff00;">p</span><span style="color:#ff0000;">e</span><span style="color:#808080;">r</span><span style="color:#ffff00;">i</span>ment
+(Colors are hex approximations.)
 </td>
 </tr>
 </table>
 
-(The actual app uses CSS `linear-gradient` for `background-image` and `background-clip: text` for the precise effect on a black page background.)
+(The actual app applies a specific color to each character directly via CSS `color` style on a black page background.)
 
 ## Data Sources
 
-- `src/data.ts`: Contains the main `TEXT` to be displayed, `COLORS` definitions (mapping color names to hex values), and the base `DICTIONARY` (mapping TP words to their `color1`, `color2`, and a fallback English `en` field).
-- `public/dictionary.yml`: A YAML file providing detailed Toki Pona word definitions (nouns, verbs, adjectives, etc.). Used to understand word meanings if extending precision logic.
-- `public/compounds.txt`: A text file listing common Toki Pona compound phrases, their English translations, and frequency scores. This is the primary source for finding multi-word TP definitions for English words.
-
-## Color Primal Terms
-
-The following mapping defines the primal linguistic concept associated with each core color:
-
-- orange: body
-- blue: human
-- lime: nature
-- yellow: action
-- red: good
-- gray: feeling
-- pink: quality
-- brown: land
-- green: tool
-- black: bad
-- magenta: many
-- cyan: location
+- `

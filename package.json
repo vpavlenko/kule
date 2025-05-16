@@ -4,9 +4,11 @@
     "private": true,
     "homepage": "https://vpavlenko.github.io/kule/",
     "dependencies": {
+        "@types/styled-components": "^5.1.34",
+        "js-yaml": "^4.1.0",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
-        "js-yaml": "^4.1.0"
+        "styled-components": "^6.1.18"
     },
     "scripts": {
         "start": "react-scripts start",
@@ -33,10 +35,10 @@
         ]
     },
     "devDependencies": {
+        "@types/js-yaml": "^4.0.9",
         "@types/react": "^18.0.0",
         "@types/react-dom": "^18.0.0",
-        "typescript": "^4.0.0",
         "react-scripts": "5.0.1",
-        "@types/js-yaml": "^4.0.9"
+        "typescript": "^4.0.0"
     }
 }
