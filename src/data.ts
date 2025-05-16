@@ -1,4 +1,4 @@
-const DICTIONARY = [
+export const DICTIONARY = [
   {
     tp: "sijelo",
     en: "body",
@@ -733,7 +733,7 @@ const DICTIONARY = [
   },
 ];
 
-const COLORS = {
+export const COLORS = {
   orange: "#ffa101",
   yellow: "#ffff00",
   pink: "#ff89c3",
@@ -749,6 +749,5 @@ const COLORS = {
   white: "#ffffff",
 };
 
-const TEXT = `
-Every inch of wall space is covered by a bookcase. Each bookcase has six shelves, going almost to the ceiling. Some bookshelves are stacked to the brim with hardback books: science, maths, history, and everything else. Other shelves have two layers of paperback science fiction, with the back layer of books propped up on old tissue boxes or lengths of wood, so that you can see the back layer of books above the books in front. And it still isn't enough. Books are overflowing onto the tables and the sofas and making little heaps under the windows.
-`;
+export const TEXT =
+  "Every inch of wall space is covered by a bookcase. Each bookcase has six shelves, going almost to the ceiling. Some bookshelves are stacked to the brim with hardback books: science, maths, history, and everything else. Other shelves have two layers of paperback science fiction, with the back layer of books propped up on old tissue boxes or lengths of wood, so that you can see the back layer of books above the books in front. And it still isn't enough. Books are overflowing onto the tables and the sofas and making little heaps under the windows.";
