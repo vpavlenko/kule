@@ -20,8 +20,8 @@ export const DICTIONARY = [
   {
     tp: "ike",
     en: "bad",
-    color1: "black",
-    color2: "black",
+    color1: "white",
+    color2: "white",
   },
   {
     tp: "lawa",
@@ -44,7 +44,7 @@ export const DICTIONARY = [
   {
     tp: "moli",
     en: "death",
-    color1: "black",
+    color1: "white",
     color2: "orange",
   },
   {
@@ -68,7 +68,7 @@ export const DICTIONARY = [
   {
     tp: "pini",
     en: "end",
-    color1: "black",
+    color1: "white",
     color2: "lime",
   },
   {
@@ -92,14 +92,14 @@ export const DICTIONARY = [
   {
     tp: "jaki",
     en: "dirty",
-    color1: "black",
+    color1: "white",
     color2: "brown",
   },
   {
     tp: "oko",
     en: "eye",
     color1: "orange",
-    color2: "black",
+    color2: "white",
   },
   {
     tp: "tawa",
@@ -116,7 +116,7 @@ export const DICTIONARY = [
   {
     tp: "utala",
     en: "conflict",
-    color1: "black",
+    color1: "white",
     color2: "cyan",
   },
   {
@@ -139,12 +139,12 @@ export const DICTIONARY = [
     tp: "lili",
     en: "small",
     color1: "pink",
-    color2: "black",
+    color2: "white",
   },
   {
     tp: "pakala",
     en: "blunder",
-    color1: "black",
+    color1: "white",
     color2: "pink",
   },
   {
@@ -172,7 +172,7 @@ export const DICTIONARY = [
   {
     tp: "nasa",
     en: "silly",
-    color1: "black",
+    color1: "white",
     color2: "gray",
   },
   {
@@ -200,7 +200,7 @@ export const DICTIONARY = [
   {
     tp: "lete",
     en: "cold",
-    color1: "black",
+    color1: "white",
     color2: "blue",
   },
   {
@@ -213,7 +213,7 @@ export const DICTIONARY = [
     tp: "kipisi",
     en: "cut",
     color1: "yellow",
-    color2: "black",
+    color2: "white",
   },
   {
     tp: "sewi",
@@ -389,7 +389,7 @@ export const DICTIONARY = [
     tp: "sama",
     en: "same",
     color1: "magenta",
-    color2: "black",
+    color2: "white",
   },
   {
     tp: "ni",
@@ -445,7 +445,7 @@ export const DICTIONARY = [
     tp: "mije",
     en: "male",
     color1: "blue",
-    color2: "black",
+    color2: "white",
   },
   {
     tp: "moku",
@@ -485,7 +485,7 @@ export const DICTIONARY = [
     tp: "weka",
     en: "absent",
     color1: "brown",
-    color2: "black",
+    color2: "white",
   },
   {
     tp: "lon",
@@ -513,7 +513,7 @@ export const DICTIONARY = [
     tp: "meso",
     en: "medium",
     color1: "cyan",
-    color2: "black",
+    color2: "white",
   },
   {
     tp: "e",
@@ -657,7 +657,7 @@ export const DICTIONARY = [
     tp: "pipi",
     en: "bug",
     color1: "lime",
-    color2: "black",
+    color2: "white",
   },
   {
     tp: "jo",
@@ -729,7 +729,7 @@ export const DICTIONARY = [
     tp: "monsuta",
     en: "fear",
     color1: "gray",
-    color2: "black",
+    color2: "white",
   },
 ];
 
@@ -738,7 +738,6 @@ export const COLORS = {
   yellow: "#ffff00",
   pink: "#ff89c3",
   green: "#38761d",
-  black: "#000000",
   cyan: "#00ffff",
   lime: "#00ff00",
   brown: "#b45f06",
@@ -747,6 +746,7 @@ export const COLORS = {
   blue: "#0000ff",
   red: "#ff0000",
   white: "#ffffff",
+  black: "#000000",
 };
 
 export const TEXT =
