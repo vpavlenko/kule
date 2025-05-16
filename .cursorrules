@@ -1,0 +1,5 @@
+# Styling Rules for Kule Project
+
+## Backgrounds
+- Never use any backgrounds except #ffffff (white). This is crucial for the color-intensive text application.
+  Apply to: All UI components. 

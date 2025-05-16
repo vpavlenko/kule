@@ -1,3 +1,12 @@
+# Kule Text Colorization App
+
+This application displays text in multiple languages (English, Ukrainian, Spanish) and color-codes them based on Toki Pona definitions.
+It provides tooltips to show the Toki Pona words, their semantic primal color components, and English translations.
+
+## Styling Guidelines
+
+- **Background Color**: Never use any backgrounds except #ffffff (white). All UI components must adhere to this. This is crucial for the color-intensive text display.
+
 # Kule Text Colorizer Logic
 
 This project displays a given text, with words colored based on their corresponding Toki Pona definitions. The coloring follows a specific set of rules:

@@ -840,3 +840,78 @@ export const UKRAINIAN_WORD_TP_MAP: Record<string, string[]> = {
   попід: ["lon", "anpa", "poka"], // under and near
   вікнами: ["lupa", "lukin", "tomo"], // seeing holes of building (windows)
 };
+
+export const SPANISH_TEXT = `
+Cada pulgada de espacio en la pared está cubierta por una librería. Cada librería tiene seis estanterías, llegando casi hasta el techo. Algunas estanterías están saturadas hasta el tope con libros de tapa dura: ciencia, matemáticas, historia y todo lo demás. Otras estanterías tienen dos capas de libros de bolsillo de ciencia ficción, con la capa de atrás apoyada sobre cajas de pañuelos viejos o un tramo de madera, así puedes ver la capa de atrás de libros encima de los libros de enfrente. Y aún eso no es suficiente. Los libros están desbordándose sobre las mesas y los sofás y amontonándose bajo las ventanas.
+`.trim();
+
+export const SPANISH_WORD_TP_MAP: Record<string, string[]> = {
+  cada: ["ale"], // "every" or "wan" for "each"
+  pulgada: ["lili"], // "inch" (small unit)
+  de: ["pi"], // "of" (can be complex, 'pi' is one way)
+  espacio: ["kon"], // "space"
+  en: ["lon"], // "in", "on"
+  la: [], // "the" (article, often omitted)
+  pared: ["supa"], // "wall"
+  está: [], // "is" (copula, often omitted)
+  cubierta: ["len"], // "covered"
+  por: ["tan"], // "by"
+  una: ["wan"], // "a", "one"
+  librería: ["poki", "lipu"], // "bookcase"
+  tiene: ["jo"], // "has"
+  seis: ["luka", "wan"], // "six" (5+1)
+  estanterías: ["supa", "palisa"], // "shelves" (stick/board surfaces)
+  llegando: ["tawa"], // "arriving", "going to"
+  casi: ["seme", "lili"], // "almost"
+  hasta: ["tawa"], // "until", "up to"
+  el: [], // "the"
+  techo: ["sewi", "supa"], // "ceiling" (high surface)
+  algunas: ["mute", "lili"], // "some" (a few many)
+  saturadas: ["jo", "mute", "ale"], // "saturated" (have very many) - 'ale' for emphasis, or 'kulupu ale'
+  tope: ["sewi"], // "top"
+  con: ["poka"], // "with"
+  libros: ["lipu"], // "books"
+  tapa: ["len"], // "cover"
+  dura: ["kiwen"], // "hard"
+  ciencia: ["sona"], // "science"
+  matemáticas: ["nanpa"], // "maths"
+  historia: ["sona", "tenpo", "pini"], // "history"
+  y: ["en"], // "and"
+  todo: ["ale", "ijo"], // "everything"
+  lo: [], // "it" (often omitted)
+  demás: ["ante"], // "else", "other"
+  otras: ["ante"], // "other" (feminine plural)
+  tienen: ["jo"], // "have" (plural)
+  dos: ["tu"], // "two"
+  capas: ["len", "mute"], // "layers"
+  bolsillo: ["lipu", "lili"], // "paperback" (small book), or "poki lili" for pocket
+  ficción: ["toki", "nasa"], // "fiction"
+  atrás: ["monsi"], // "back", "rear"
+  apoyada: ["awen", "sewi"], // "propped up"
+  sobre: ["sewi"], // "on", "on top of"
+  cajas: ["poki"], // "boxes"
+  pañuelos: ["lipu", "ko"], // "tissues" (squishy paper)
+  viejos: ["tenpo", "mute"], // "old"
+  o: ["anu"], // "or"
+  un: ["wan"], // "a", "one"
+  tramo: ["linja"], // "length", "stretch"
+  madera: ["kasi"], // "wood"
+  así: [], // "so", "thus" (connector, often implied)
+  puedes: ["ken"], // "you can"
+  ver: ["lukin"], // "see"
+  encima: ["sewi"], // "above"
+  los: [], // "the" (plural)
+  enfrente: ["sinpin"], // "front"
+  aún: ["awen"], // "still"
+  eso: ["ni"], // "that"
+  no: ["ala"], // "not"
+  suficiente: ["pona", "mute"], // "enough"
+  están: [], // "are" (copula)
+  desbordándose: ["tawa", "selo"], // "overflowing"
+  mesas: ["supa"], // "tables"
+  sofás: ["supa", "lape"], // "sofas"
+  amontonándose: ["kulupu", "mute"], // "piling up"
+  bajo: ["anpa"], // "under"
+  las: [], // "the" (feminine plural)
+  ventanas: ["lupa", "lukin"], // "windows"
+};
