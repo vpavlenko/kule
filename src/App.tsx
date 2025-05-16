@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 // Assuming data.ts is in the parent directory (e.g., project_root/data.ts and project_root/src/App.tsx)
 // Adjust the path if your data.ts is located elsewhere, e.g., './data' if it's in the same src folder.
-import { DICTIONARY, COLORS, TEXT } from "./data";
+import { DICTIONARY, COLORS, TEXT, PRIMAL_COLOR_TERMS } from "./data";
 // import yaml from "js-yaml";
 
 interface LetterSegment {
@@ -9,6 +9,7 @@ interface LetterSegment {
   color1: string;
   color2: string;
   isTokiPonaColored: boolean;
+  tpDefinition?: string[];
 }
 
 interface AnnotatedWord {
@@ -17,34 +18,11 @@ interface AnnotatedWord {
   tpDefinition?: string[];
 }
 
-const COLOR_MNEMONICS: Record<string, { text: string; color: string }> = {
-  orange: { text: "body", color: COLORS.orange },
-  blue: { text: "human", color: COLORS.blue },
-  lime: { text: "nature", color: COLORS.lime },
-  yellow: { text: "action", color: COLORS.yellow },
-  red: { text: "good", color: COLORS.red },
-  gray: { text: "feeling", color: COLORS.gray },
-  pink: { text: "quality", color: COLORS.pink },
-  brown: { text: "land", color: COLORS.brown },
-  green: { text: "tool", color: COLORS.green },
-  white: { text: "bad", color: COLORS.white },
-  magenta: { text: "many", color: COLORS.magenta },
-  cyan: { text: "location", color: COLORS.cyan },
-  // Add black if needed, though not in the user provided list for mnemonics
-  // black: { text: "space/void", color: COLORS.black },
-};
-
-// Function to find the original color names for a tpWord from DICTIONARY
-// This is needed because tpColorMap stores hex values, but mnemonics are tied to color names.
-const getTpWordOriginalColorNames = (
-  tpWord: string
-): { c1Name?: string; c2Name?: string } => {
-  const dictEntry = DICTIONARY.find((d) => d.tp === tpWord);
-  if (dictEntry) {
-    return { c1Name: dictEntry.color1, c2Name: dictEntry.color2 };
-  }
-  return {};
-};
+// Add PrimalSegment interface
+interface PrimalSegment {
+  text: string;
+  color?: string; // Color for this segment, defaults to white if undefined
+}
 
 // Helper to build a lookup map from Toki Pona terms to their colors
 const buildTpColorMap = (
@@ -187,6 +165,98 @@ const findBestTpDefinition = (
 };
 */
 
+// Function to generate tooltip text using PRIMAL_COLOR_TERMS
+const generatePrimalTooltipText = (
+  tpWord: string,
+  primalColorTerms: Record<string, string>,
+  dictionary: typeof DICTIONARY,
+  appColors: typeof COLORS // Added appColors for direct access
+): PrimalSegment[] => {
+  const wordEntry = dictionary.find((entry) => entry.tp === tpWord);
+  const finalSegments: PrimalSegment[] = [];
+
+  if (!wordEntry || (!wordEntry.color1 && !wordEntry.color2)) {
+    // If word not in DICTIONARY, or no colors defined for it,
+    // return empty segments for the primal part.
+    // The English definition part is handled by the caller.
+    return [];
+  }
+
+  const parts: { term?: string; colorName?: string; actualColor?: string }[] =
+    [];
+
+  if (wordEntry.color1) {
+    parts.push({
+      term: primalColorTerms[wordEntry.color1],
+      colorName: wordEntry.color1,
+      actualColor: appColors[wordEntry.color1 as keyof typeof appColors],
+    });
+  }
+  if (wordEntry.color2) {
+    // If color2 is same as color1, and primal terms are built from color1+color2,
+    // we still want to represent it if distinct, or if it's the only color.
+    parts.push({
+      term: primalColorTerms[wordEntry.color2],
+      colorName: wordEntry.color2,
+      actualColor: appColors[wordEntry.color2 as keyof typeof appColors],
+    });
+  }
+
+  // Handle cases where a word might only have one color defined (e.g. color1 but no color2)
+  // Or if color1 and color2 are the same. The current logic pushes both to `parts`.
+  // For "mute" (color1: 'mute', color2: 'mute'), `parts` will have two identical entries.
+
+  let firstPartRendered = false;
+  if (parts.length > 0) {
+    const part1 = parts[0];
+    if (part1.term && part1.actualColor) {
+      finalSegments.push({ text: part1.term, color: part1.actualColor });
+      firstPartRendered = true;
+    } else if (part1.term) {
+      finalSegments.push({
+        text: `${part1.term}(?)`,
+        color: appColors.white || "#ffffff",
+      });
+      firstPartRendered = true;
+    } else if (part1.colorName) {
+      finalSegments.push({
+        text: `${part1.colorName}(?)`,
+        color: appColors.white || "#ffffff",
+      });
+      firstPartRendered = true;
+    }
+
+    if (parts.length > 1) {
+      const part2 = parts[1];
+      // Add " + " if the first part was rendered and a second part (term or colorName) exists
+      if (firstPartRendered && (part2.term || part2.colorName)) {
+        finalSegments.push({
+          text: " + ",
+          color: appColors.white || "#ffffff",
+        });
+      }
+
+      if (part2.term && part2.actualColor) {
+        finalSegments.push({ text: part2.term, color: part2.actualColor });
+      } else if (part2.term) {
+        finalSegments.push({
+          text: `${part2.term}(?)`,
+          color: appColors.white || "#ffffff",
+        });
+      } else if (part2.colorName) {
+        finalSegments.push({
+          text: `${part2.colorName}(?)`,
+          color: appColors.white || "#ffffff",
+        });
+      }
+    } else if (parts.length === 1 && !wordEntry.color2 && wordEntry.color1) {
+      // If only color1 is defined, we don't need a " + " or a second part.
+      // The current logic correctly handles this by not entering the `if (parts.length > 1)` block.
+    }
+  }
+  return finalSegments;
+};
+
 const transformText = (
   text: string,
   tpColorMap: Map<string, { color1: string; color2: string }>,
@@ -203,7 +273,7 @@ const transformText = (
         originalText: originalWord,
         segments: [
           {
-            text: originalWord,
+            text: originalWord.length > 0 ? " " : "",
             color1: colorPalette.black || "#000000",
             color2: colorPalette.black || "#000000",
             isTokiPonaColored: false,
@@ -415,7 +485,7 @@ const App: React.FC = () => {
         <div style={{ textAlign: "left" }}>
           {word.tpDefinition.map((tpWord, index) => {
             const colorData = tpColorMap.get(tpWord); // Hex colors for the tpWord
-            const originalColorNames = getTpWordOriginalColorNames(tpWord);
+            const wordEntry = DICTIONARY.find((entry) => entry.tp === tpWord); // For 'en' and primal colors
 
             // Build TP word spans with specific letter coloring
             const tpWordSpans: JSX.Element[] = [];
@@ -464,59 +534,55 @@ const App: React.FC = () => {
               tpWordSpans.push(<span key={`${index}-empty`}>{tpWord}</span>);
             }
 
-            // Build mnemonics spans
-            const mnemonicsSpans: JSX.Element[] = [];
-            if (
-              originalColorNames.c1Name &&
-              COLOR_MNEMONICS[originalColorNames.c1Name]
-            ) {
-              const mnemonic1 = COLOR_MNEMONICS[originalColorNames.c1Name];
-              mnemonicsSpans.push(
-                <span key={`${index}-m1`} style={{ color: mnemonic1.color }}>
-                  {mnemonic1.text}
-                </span>
-              );
-            }
-            if (
-              originalColorNames.c2Name &&
-              COLOR_MNEMONICS[originalColorNames.c2Name] &&
-              originalColorNames.c1Name !== originalColorNames.c2Name
-            ) {
-              if (mnemonicsSpans.length > 0)
-                mnemonicsSpans.push(<span key={`${index}-plus`}> + </span>);
-              const mnemonic2 = COLOR_MNEMONICS[originalColorNames.c2Name];
-              mnemonicsSpans.push(
-                <span key={`${index}-m2`} style={{ color: mnemonic2.color }}>
-                  {mnemonic2.text}
-                </span>
-              );
-            }
-            // If only one color or c1Name equals c2Name, and mnemonicsSpans is empty from c1, but c2 is valid (covers single color words if c1 was undefined but c2 defined)
-            else if (
-              originalColorNames.c2Name &&
-              COLOR_MNEMONICS[originalColorNames.c2Name] &&
-              mnemonicsSpans.length === 0
-            ) {
-              const mnemonic2 = COLOR_MNEMONICS[originalColorNames.c2Name];
-              mnemonicsSpans.push(
-                <span
-                  key={`${index}-m2-single`}
-                  style={{ color: mnemonic2.color }}
-                >
-                  {mnemonic2.text}
-                </span>
-              );
-            }
+            // Generate primal tooltip string
+            const primalSegments = generatePrimalTooltipText(
+              tpWord,
+              PRIMAL_COLOR_TERMS,
+              DICTIONARY,
+              COLORS // Pass the main COLORS map
+            );
 
             return (
               <div key={index} style={{ marginBottom: "3px" }}>
                 {" "}
                 {/* Each defined TP word on a new line */}
                 {tpWordSpans}
-                {mnemonicsSpans.length > 0 && (
+                {/* English definition part */}
+                {wordEntry?.en && colorData && (
+                  <>
+                    <span style={{ color: COLORS.white || "#ffffff" }}> (</span>
+                    {wordEntry.en.length > 0 && (
+                      <span style={{ color: colorData.color1 }}>
+                        {wordEntry.en[0]}
+                      </span>
+                    )}
+                    {wordEntry.en.length > 1 && (
+                      <span style={{ color: colorData.color2 }}>
+                        {wordEntry.en[1]}
+                      </span>
+                    )}
+                    {wordEntry.en.length > 2 && (
+                      <span style={{ color: COLORS.white || "#ffffff" }}>
+                        {wordEntry.en.substring(2)}
+                      </span>
+                    )}
+                    <span style={{ color: COLORS.white || "#ffffff" }}>)</span>
+                  </>
+                )}
+                {/* Primal terms part */}
+                {primalSegments.length > 0 && (
                   <>
                     <span style={{ color: COLORS.white || "#ffffff" }}>: </span>
-                    {mnemonicsSpans}
+                    {primalSegments.map((segment, segIdx) => (
+                      <span
+                        key={`${index}-primal-${segIdx}`}
+                        style={{
+                          color: segment.color || COLORS.white || "#ffffff",
+                        }}
+                      >
+                        {segment.text}
+                      </span>
+                    ))}
                   </>
                 )}
               </div>
@@ -536,24 +602,31 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="annotated-text-container">
+    <div
+      className="annotated-text-container"
+      style={{
+        maxWidth: "600px",
+        margin: "0 auto", // Center the div
+        backgroundColor: "#000000", // Added black background
+        fontVariantLigatures: "none", // Disable ligatures
+      }}
+    >
       {annotatedText.map((word, wordIndex) => (
         <span
           key={wordIndex}
           className="annotated-word"
           onMouseEnter={(e) => handleWordMouseEnter(e, word)}
           onMouseLeave={handleWordMouseLeave}
+          style={{ display: "inline" }} // Changed to inline
         >
           {word.segments.map((segment, segmentIndex) => {
-            const style: React.CSSProperties = {};
+            const style: React.CSSProperties = { display: "inline" }; // Changed to inline
             if (segment.isTokiPonaColored) {
               style.color = segment.color1;
             } else {
-              if (segment.text.trim().length === 0) {
-                style.color = COLORS.black || "#000000";
-              } else {
-                style.color = segment.color1;
-              }
+              // segment.color1 is already correctly set by transformText for non-TP parts
+              // (e.g., white for uncolored letters/punctuation, black for space characters)
+              style.color = segment.color1;
             }
             return (
               <span key={`${wordIndex}-${segmentIndex}`} style={style}>
@@ -569,13 +642,14 @@ const App: React.FC = () => {
             position: "fixed",
             top: tooltipPosition.y,
             left: tooltipPosition.x,
-            backgroundColor: "#333",
+            backgroundColor: "#000000", // Changed to black
             color: "white",
             padding: "8px 12px",
             borderRadius: "4px",
             zIndex: 1000,
             pointerEvents: "none",
             fontSize: "0.9em",
+            border: "1px solid white", // Added white border
           }}
         >
           {tooltipContent}

@@ -90,3 +90,20 @@ Or, with a black background (simulated via a table cell for Markdown, if the vie
 - `src/data.ts`: Contains the main `TEXT` to be displayed, `COLORS` definitions (mapping color names to hex values), and the base `DICTIONARY` (mapping TP words to their `color1`, `color2`, and a fallback English `en` field).
 - `public/dictionary.yml`: A YAML file providing detailed Toki Pona word definitions (nouns, verbs, adjectives, etc.). Used to understand word meanings if extending precision logic.
 - `public/compounds.txt`: A text file listing common Toki Pona compound phrases, their English translations, and frequency scores. This is the primary source for finding multi-word TP definitions for English words.
+
+## Color Primal Terms
+
+The following mapping defines the primal linguistic concept associated with each core color:
+
+- orange: body
+- blue: human
+- lime: nature
+- yellow: action
+- red: good
+- gray: feeling
+- pink: quality
+- brown: land
+- green: tool
+- black: bad
+- magenta: many
+- cyan: location
